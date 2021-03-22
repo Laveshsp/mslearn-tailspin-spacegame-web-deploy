@@ -1,5 +1,5 @@
 trigger:
-- '*'
+  - '*'
   
 variables:
   buildConfiguration: 'Release'
@@ -24,18 +24,18 @@ stages:
       displayName: 'Use .NET Core SDK $(dotnetSdkVersion)'
       inputs:
         version: '$(dotnetSdkVersion)'
-
+ 
     - task: Npm@1
       displayName: 'Run npm install'
       inputs:
         verbose: false
- 
+  
     - script: './node_modules/.bin/node-sass $(wwwrootDir) --output $(wwwrootDir)'
       displayName: 'Compile Sass assets'
- 
+  
     - task: gulp@1
       displayName: 'Run gulp tasks'
-
+ 
     - script: 'echo "$(Build.DefinitionName), $(Build.BuildId), $(Build.BuildNumber)" > buildinfo.txt'
       displayName: 'Write build info'
       workingDirectory: $(wwwrootDir)
@@ -61,10 +61,10 @@ stages:
         publishWebProjects: false
         arguments: '--no-build --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/$(buildConfiguration)'
         zipAfterPublish: true
- 
+  
     - publish: '$(Build.ArtifactStagingDirectory)'
       artifact: drop
-
+  
 - stage: 'Deploy'
   displayName: 'Deploy the web application'
   dependsOn: Build
@@ -72,18 +72,18 @@ stages:
   - deployment: Deploy
     pool:
       vmImage: 'ubuntu-18.04'
-      environment: dev
-      variables:
-      - group: Release
-      strategy:
-        runOnce:
-          deploy:
-            steps:
-            - download: current
-              artifact: drop
-            - task: AzureWebApp@1
-              displayName: 'Azure App Service Deploy: website'
-              inputs:
-                azureSubscription: 'Azureportalconnect'
-                appName: '$(WebAppName)'
-                package: '$(Pipeline.Workspace)/drop/$(buildConfiguration)/*.zip'
+    environment: dev
+    variables:
+    - group: Release
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: drop
+          - task: AzureWebApp@1
+            displayName: 'Azure App Service Deploy: website'
+            inputs:
+              azureSubscription: 'Azureportalconnect'
+              appName: '$(WebAppName)'
+              package: '$(Pipeline.Workspace)/drop/$(buildConfiguration)/*.zip'
